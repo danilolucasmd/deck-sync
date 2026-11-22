@@ -61,7 +61,11 @@ export function QuickAccess() {
             <ButtonItem
               layout="below"
               label={provider}
-              description="Connected. Select to change or sign out."
+              description={
+                state.needs_signin
+                  ? "Sign in again to use your app credentials."
+                  : "Connected. Select to change or sign out."
+              }
               onClick={() => setView({ name: "provider" })}
             >
               Manage

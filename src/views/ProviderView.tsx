@@ -70,7 +70,9 @@ export function ProviderView({ onBack }: { onBack(): void }) {
                 icon={Icon && <Icon />}
                 label={provider.name}
                 description={
-                  current
+                  current && state.needs_signin
+                    ? "Your app credentials changed. Switch account to sign in again with them."
+                    : current
                     ? `Connected. Switch to use a different ${provider.name} account, or sign out to remove it from this Deck.`
                     : "Opens a browser to sign in and let DeckSync manage your saves folder."
                 }

@@ -152,10 +152,20 @@ class Rclone:
             pass
 
 
-def is_configured() -> bool:
+def _remote_config() -> configparser.SectionProxy | None:
     parser = configparser.ConfigParser()
     try:
         parser.read(config_path())
     except configparser.Error:
-        return False
-    return parser.has_option(REMOTE, "token")
+        return None
+    return parser[REMOTE] if parser.has_section(REMOTE) else None
+
+
+def is_configured() -> bool:
+    section = _remote_config()
+    return section is not None and "token" in section
+
+
+def signed_in_client_id() -> str:
+    section = _remote_config()
+    return section.get("client_id", "") if section is not None else ""

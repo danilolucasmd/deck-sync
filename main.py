@@ -34,6 +34,8 @@ class Plugin:
         state["credentials"] = {
             provider_id: credentials["client_id"] for provider_id, credentials in state["credentials"].items()
         }
+        expected_client = state["credentials"].get(state["provider"], "")
+        state["needs_signin"] = state["connected"] and rclone.signed_in_client_id() != expected_client
         state["syncing"] = self.engine.busy
         state["home"] = decky.DECKY_USER_HOME
         state["history_limits"] = list(HISTORY_LIMITS)

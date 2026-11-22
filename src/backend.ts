@@ -21,6 +21,7 @@ export interface PluginState {
   credentials: Record<string, string>;
   providers: Provider[];
   connected: boolean;
+  needs_signin: boolean;
   notify: boolean;
   two_way: boolean;
   history_limit: number;
