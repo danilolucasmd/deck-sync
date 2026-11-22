@@ -1,0 +1,11 @@
+{
+  "name": "DeckSync",
+  "author": "Danilo de Lucas",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["backup", "cloud", "saves", "rclone"],
+    "description": "Back up game saves to Google Drive with version history, on launch, on exit, or on demand.",
+    "image": "https://opengraph.githubassets.com/1/danilolucasmd/deck-sync"
+  }
+}
