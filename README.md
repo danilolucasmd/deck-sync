@@ -23,6 +23,10 @@ Games Save/
 - Notifications when files are backed up or restored. Can be turned off.
 - Choose how many old saves each game keeps in `history/`: 20, 30, 50, or 100.
 
+## Google Drive rate limits
+
+By default DeckSync signs in through rclone's built-in Google app, which every rclone user shares, so Google often answers with `rateLimitExceeded`. For reliable syncing, create your own OAuth client by following [rclone's guide](https://rclone.org/drive/#making-your-own-client-id), then enter its client ID and secret under **Cloud provider > Use your own app** and sign in again.
+
 ## Safety checks
 
 - A Drive folder can only belong to one game. DeckSync writes a small `.decksync.json` into each game folder and refuses to use a folder that belongs to a different game or that already holds files it didn't create.

@@ -1,13 +1,12 @@
-import { ButtonItem, DropdownItem, Field, Navigation, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
+import { ButtonItem, DropdownItem, Field, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useState } from "react";
+import { clearDrafts, useDraft } from "../draft";
 import { Option, setHistoryLimit, setOption, SyncResult, syncAll } from "../backend";
 import { providerName, refresh, useStore } from "../store";
-import { routes } from "../routes";
+import { GameView } from "../views/GameView";
+import { ProviderView } from "../views/ProviderView";
 
-function open(path: string) {
-  Navigation.Navigate(path);
-  Navigation.CloseSideMenus();
-}
+type View = { name: "main" } | { name: "provider" } | { name: "game"; id: string | null };
 
 function lastSync(timestamp: number | null) {
   if (!timestamp) return "Not synced yet";
@@ -25,8 +24,16 @@ function summarize(results: SyncResult[]) {
 export function QuickAccess() {
   const { state, activeGame } = useStore();
   const [summary, setSummary] = useState<string | null>(null);
+  const [view, setView] = useDraft<View>("view", { name: "main" });
 
   if (!state) return null;
+
+  const back = () => {
+    clearDrafts();
+    setView({ name: "main" });
+  };
+  if (view.name === "provider") return <ProviderView onBack={back} />;
+  if (view.name === "game") return <GameView id={view.id} onBack={back} />;
 
   const provider = providerName(state);
   const busy = state.syncing || activeGame !== null;
@@ -55,7 +62,7 @@ export function QuickAccess() {
               layout="below"
               label={provider}
               description="Connected. Select to change or sign out."
-              onClick={() => open(routes.provider)}
+              onClick={() => setView({ name: "provider" })}
             >
               Manage
             </ButtonItem>
@@ -63,7 +70,7 @@ export function QuickAccess() {
             <ButtonItem
               layout="below"
               description="Connect a cloud account to store your saves."
-              onClick={() => open(routes.provider)}
+              onClick={() => setView({ name: "provider" })}
             >
               Set up cloud provider
             </ButtonItem>
@@ -97,7 +104,7 @@ export function QuickAccess() {
               layout="below"
               label={game.name}
               description={lastSync(game.last_sync)}
-              onClick={() => open(routes.game(game.id))}
+              onClick={() => setView({ name: "game", id: game.id })}
             >
               Edit
             </ButtonItem>
@@ -107,7 +114,7 @@ export function QuickAccess() {
           <ButtonItem
             layout="below"
             description="Choose a game, its save folder, and where it goes in the cloud."
-            onClick={() => open(routes.game("new"))}
+            onClick={() => setView({ name: "game", id: null })}
           >
             Add game
           </ButtonItem>

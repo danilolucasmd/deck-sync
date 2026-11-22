@@ -7,6 +7,7 @@ import decky
 
 DEFAULTS = {
     "provider": None,
+    "credentials": {},
     "notify": True,
     "two_way": False,
     "history_limit": 30,

@@ -24,7 +24,7 @@ class Login:
         self._on_finished = on_finished
         self._process: asyncio.subprocess.Process | None = None
 
-    async def start(self, provider: Provider) -> str:
+    async def start(self, provider: Provider, options: tuple[str, ...] = ()) -> str:
         await self.cancel()
         if _port_in_use():
             raise RuntimeError(f"Port {AUTH_PORT} is busy. Close other rclone sessions and try again.")
@@ -32,7 +32,7 @@ class Login:
         await self._runner.delete_remote()
         self._process = await asyncio.create_subprocess_exec(
             rclone.binary(), "--config", rclone.config_path(),
-            "config", "create", rclone.REMOTE, provider.rclone_type, *provider.options,
+            "config", "create", rclone.REMOTE, provider.rclone_type, *provider.options, *options,
             stdin=asyncio.subprocess.DEVNULL,
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,

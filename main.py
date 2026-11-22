@@ -1,3 +1,4 @@
+import os
 import signal
 import time
 
@@ -30,6 +31,9 @@ class Plugin:
         state = self.settings.snapshot()
         state["connected"] = bool(state["provider"]) and rclone.is_configured()
         state["providers"] = [provider.to_dict() for provider in providers.PROVIDERS.values()]
+        state["credentials"] = {
+            provider_id: credentials["client_id"] for provider_id, credentials in state["credentials"].items()
+        }
         state["syncing"] = self.engine.busy
         state["home"] = decky.DECKY_USER_HOME
         state["history_limits"] = list(HISTORY_LIMITS)
@@ -46,7 +50,22 @@ class Plugin:
         self.settings["history_limit"] = limit
 
     async def start_login(self, provider_id: str) -> str:
-        return await self.login.start(providers.get(provider_id))
+        credentials = self.settings["credentials"].get(provider_id)
+        options = (
+            (f"client_id={credentials['client_id']}", f"client_secret={credentials['client_secret']}")
+            if credentials
+            else ()
+        )
+        return await self.login.start(providers.get(provider_id), options)
+
+    async def set_credentials(self, provider_id: str, client_id: str, client_secret: str):
+        providers.get(provider_id)
+        credentials = dict(self.settings["credentials"])
+        if client_id.strip() and client_secret.strip():
+            credentials[provider_id] = {"client_id": client_id.strip(), "client_secret": client_secret.strip()}
+        else:
+            credentials.pop(provider_id, None)
+        self.settings["credentials"] = credentials
 
     async def _login_finished(self, provider: providers.Provider, success: bool):
         if success:
@@ -57,6 +76,13 @@ class Plugin:
         await self.login.cancel()
         await self.rclone.delete_remote()
         self.settings["provider"] = None
+
+    async def list_local_folders(self, path: str) -> list[str]:
+        try:
+            names = [entry.name for entry in os.scandir(path) if entry.is_dir()]
+        except OSError:
+            return []
+        return sorted(names, key=lambda name: (name.startswith("."), name.casefold()))
 
     async def list_remote_folders(self, path: str) -> list[str]:
         return await self.rclone.list_dirs(path.strip("/"))

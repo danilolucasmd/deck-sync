@@ -1,18 +1,12 @@
-import { addEventListener, definePlugin, removeEventListener, routerHook, toaster } from "@decky/api";
+import { addEventListener, definePlugin, removeEventListener, toaster } from "@decky/api";
 import { Navigation, staticClasses } from "@decky/ui";
 import { FaCloudUploadAlt } from "react-icons/fa";
 import { onGameLifetime, SyncResult, SyncTrigger } from "./backend";
 import { QuickAccess } from "./components/QuickAccess";
 import { notifySync } from "./notify";
-import { GamePage } from "./pages/GamePage";
-import { ProviderPage } from "./pages/ProviderPage";
-import { routes } from "./routes";
 import { currentState, providerName, refresh, setActiveGame } from "./store";
 
 export default definePlugin(() => {
-  routerHook.addRoute(routes.provider, ProviderPage, { exact: true });
-  routerHook.addRoute(routes.gamePattern, GamePage, { exact: true });
-
   const started = addEventListener<[name: string]>("sync_started", (name) => setActiveGame(name));
 
   const finished = addEventListener<[result: SyncResult, trigger: SyncTrigger]>(
@@ -51,8 +45,6 @@ export default definePlugin(() => {
       removeEventListener("sync_started", started);
       removeEventListener("sync_finished", finished);
       removeEventListener("login_finished", login);
-      routerHook.removeRoute(routes.provider);
-      routerHook.removeRoute(routes.gamePattern);
     },
   };
 });
