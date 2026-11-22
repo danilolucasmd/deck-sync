@@ -1,6 +1,7 @@
 import { ButtonItem, DropdownItem, Field, PanelSection, PanelSectionRow, ToggleField } from "@decky/ui";
 import { useState } from "react";
 import { clearDrafts, useDraft } from "../draft";
+import { rememberMainPosition, useViewPosition } from "../position";
 import { Option, setHistoryLimit, setOption, SyncResult, syncAll } from "../backend";
 import { providerName, refresh, useStore } from "../store";
 import { GameView } from "../views/GameView";
@@ -25,6 +26,7 @@ export function QuickAccess() {
   const { state, activeGame } = useStore();
   const [summary, setSummary] = useState<string | null>(null);
   const [view, setView] = useDraft<View>("view", { name: "main" });
+  const anchor = useViewPosition(view.name);
 
   if (!state) return null;
 
@@ -32,8 +34,25 @@ export function QuickAccess() {
     clearDrafts();
     setView({ name: "main" });
   };
-  if (view.name === "provider") return <ProviderView onBack={back} />;
-  if (view.name === "game") return <GameView id={view.id} onBack={back} />;
+  const open = (next: View, target: string) => {
+    rememberMainPosition(anchor, target);
+    setView(next);
+  };
+
+  if (view.name === "provider") {
+    return (
+      <div ref={anchor}>
+        <ProviderView onBack={back} />
+      </div>
+    );
+  }
+  if (view.name === "game") {
+    return (
+      <div ref={anchor}>
+        <GameView id={view.id} onBack={back} />
+      </div>
+    );
+  }
 
   const provider = providerName(state);
   const busy = state.syncing || activeGame !== null;
@@ -54,31 +73,33 @@ export function QuickAccess() {
   };
 
   return (
-    <>
+    <div ref={anchor}>
       <PanelSection title="Cloud">
         <PanelSectionRow>
-          {state.connected ? (
-            <ButtonItem
-              layout="below"
-              label={provider}
-              description={
-                state.needs_signin
-                  ? "Sign in again to use your app credentials."
-                  : "Connected. Select to change or sign out."
-              }
-              onClick={() => setView({ name: "provider" })}
-            >
-              Manage
-            </ButtonItem>
-          ) : (
-            <ButtonItem
-              layout="below"
-              description="Connect a cloud account to store your saves."
-              onClick={() => setView({ name: "provider" })}
-            >
-              Set up cloud provider
-            </ButtonItem>
-          )}
+          <div data-return-target="provider">
+            {state.connected ? (
+              <ButtonItem
+                layout="below"
+                label={provider}
+                description={
+                  state.needs_signin
+                    ? "Sign in again to use your app credentials."
+                    : "Connected. Select to change or sign out."
+                }
+                onClick={() => open({ name: "provider" }, "provider")}
+              >
+                Manage
+              </ButtonItem>
+            ) : (
+              <ButtonItem
+                layout="below"
+                description="Connect a cloud account to store your saves."
+                onClick={() => open({ name: "provider" }, "provider")}
+              >
+                Set up cloud provider
+              </ButtonItem>
+            )}
+          </div>
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem
@@ -104,24 +125,28 @@ export function QuickAccess() {
       <PanelSection title="Games">
         {state.games.map((game) => (
           <PanelSectionRow key={game.id}>
-            <ButtonItem
-              layout="below"
-              label={game.name}
-              description={lastSync(game.last_sync)}
-              onClick={() => setView({ name: "game", id: game.id })}
-            >
-              Edit
-            </ButtonItem>
+            <div data-return-target={game.id}>
+              <ButtonItem
+                layout="below"
+                label={game.name}
+                description={lastSync(game.last_sync)}
+                onClick={() => open({ name: "game", id: game.id }, game.id)}
+              >
+                Edit
+              </ButtonItem>
+            </div>
           </PanelSectionRow>
         ))}
         <PanelSectionRow>
-          <ButtonItem
-            layout="below"
-            description="Choose a game, its save folder, and where it goes in the cloud."
-            onClick={() => setView({ name: "game", id: null })}
-          >
-            Add game
-          </ButtonItem>
+          <div data-return-target="add">
+            <ButtonItem
+              layout="below"
+              description="Choose a game, its save folder, and where it goes in the cloud."
+              onClick={() => open({ name: "game", id: null }, "add")}
+            >
+              Add game
+            </ButtonItem>
+          </div>
         </PanelSectionRow>
       </PanelSection>
 
@@ -155,6 +180,6 @@ export function QuickAccess() {
           />
         </PanelSectionRow>
       </PanelSection>
-    </>
+    </div>
   );
 }
